@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 clap = "3.0.0-beta.2"
 reqwest = "0.11.0"
+yubikey-piv = "0.1.0"
