@@ -5,7 +5,7 @@ use token::{get_id_token, get_access_token};
 
 mod token;
 mod yubikey;
-
+mod config;
 
 #[derive(Clap, Debug)]
 #[clap(version = "0.1")]
@@ -22,6 +22,8 @@ enum SubCommand {
     Id,
     #[clap()]
     Access,
+    #[clap()]
+    Config,
 }
 
 fn main() {
@@ -34,6 +36,9 @@ fn main() {
         SubCommand::Access => {
             let result = get_access_token(&opts.user);
             println!("{{\"token\": \"{}\", \"expiry\": \"{}\"}}", result.0, result.1.format(Format::Rfc3339));
+        }
+        SubCommand::Config => {
+            config::make(&opts.user);
         }
     }
 }
