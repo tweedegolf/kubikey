@@ -7,9 +7,11 @@ mod token;
 mod yubikey;
 mod config;
 
+/// Kubikey is a tool for using a yubikey to authenticate to the google kubernetes engine.
 #[derive(Clap, Debug)]
 #[clap(version = "0.1")]
 struct Opts {
+    /// Email adress of the service account to use. This service account should have the public key of the yubikey configured as access key.
     #[clap(short, long)]
     user: String,
     #[clap(subcommand)]
@@ -18,10 +20,13 @@ struct Opts {
 
 #[derive(Clap, Debug)]
 enum SubCommand {
+    /// Generate an identity token.
     #[clap()]
     Id,
+    /// Generate an access token.
     #[clap()]
     Access,
+    /// Configure kubectl for accessing the cluster.
     #[clap()]
     Config,
 }
