@@ -1,11 +1,11 @@
-use time::Format;
 use clap::Clap;
+use time::Format;
 
-use token::{get_id_token, get_access_token};
+use token::{get_access_token, get_id_token};
 
+mod config;
 mod token;
 mod yubikey;
-mod config;
 
 /// Kubikey is a tool for using a yubikey to authenticate to the google kubernetes engine.
 #[derive(Clap, Debug)]
@@ -37,10 +37,14 @@ fn main() {
     match opts.sub {
         SubCommand::Id => {
             println!("{}", get_id_token(&opts.user));
-        },
+        }
         SubCommand::Access => {
             let result = get_access_token(&opts.user);
-            println!("{{\"token\": \"{}\", \"expiry\": \"{}\"}}", result.0, result.1.format(Format::Rfc3339));
+            println!(
+                "{{\"token\": \"{}\", \"expiry\": \"{}\"}}",
+                result.0,
+                result.1.format(Format::Rfc3339)
+            );
         }
         SubCommand::Config => {
             config::make(&opts.user);
