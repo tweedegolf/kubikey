@@ -39,9 +39,13 @@ Access control can be done through either further gcloud access rights or roles,
 
 To create a service account with the needed rights from the commandline, three steps are needed. First, create the account with
 ```
-gcloud iam service-accounts create <NAME>
+gcloud iam service-accounts create <SERVICE_ACCOUNT_NAME> --display-name=<NAME>
 ```
-This creates a new service account with the given name, and returns the email address associated with that new account. This email address can be used to configure the access rights in kubernetes itself and is needed in the next steps
+This creates a new service account with the given name / display name. You can list all service accounts and their accociated email addresses with:
+```
+gcloud iam service-accounts list
+```
+This email address can be used to configure the access rights in kubernetes itself and is needed in the next steps
 
 Second, we add the public key as authentication method:
 ```
