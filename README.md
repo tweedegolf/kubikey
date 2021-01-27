@@ -18,21 +18,18 @@ kubectl get pods
 
 On first use, this will ask you for your PIN. After entry, kubectl gets an access token valid for a maximum of 1 hour, after which it will again ask for a PIN to create a new token.
 
-# Direct token generation
+# Installation
 
-Should you for some reason have a need to directly obtain either an identity or access token for your service account, then this is possible using
+Install build dependencies:
 ```
-kubikey -u a-1@b.iam.gserviceaccount.com id
+sudo apt-get install libssl-dev libpcsclite-dev
 ```
-for an identity token, and
-```
-kubikey -u a-1@b.iam.gserviceaccount.com access
-```
-to get an access token. Both tokens are fully scoped for all gcloud services.
 
-# Configuring Kubikey
-
-Kubikey config generates the kubeconfig based on the template `templates/kubeconfig`. This template should contain all the necessary access information for your cluster, and contain the scaffolding for the kubikey auth provider. When switching this code to a different cluster, it is easiest to first use the gcloud sdk to generate a kubeconfig for it, then using that to edit the template here, keeping just the yubikey auth_provider section unchanged.
+Build the source and move the binary into place:
+```
+cargo build --release
+sudo mv target/release/kubikey /usr/local/bin/
+```
 
 # Creating new gcloud service accounts
 
@@ -55,3 +52,19 @@ Finally, we grant `container.clusterViewer` (this is the smallest predefined rol
 ```
 gcloud projects add-iam-policy-binding tweedegolf-cluster --member=serviceAccount:<SERVICE_EMAIL> --role=container.clusterViewer
 ```
+
+# Direct token generation
+
+Should you for some reason have a need to directly obtain either an identity or access token for your service account, then this is possible using
+```
+kubikey -u a-1@b.iam.gserviceaccount.com id
+```
+for an identity token, and
+```
+kubikey -u a-1@b.iam.gserviceaccount.com access
+```
+to get an access token. Both tokens are fully scoped for all gcloud services.
+
+# Configuring Kubikey
+
+Kubikey config generates the kubeconfig based on the template `templates/kubeconfig`. This template should contain all the necessary access information for your cluster, and contain the scaffolding for the kubikey auth provider. When switching this code to a different cluster, it is easiest to first use the gcloud sdk to generate a kubeconfig for it, then using that to edit the template here, keeping just the yubikey auth_provider section unchanged.
