@@ -1,10 +1,10 @@
 use std::cell::RefCell;
 
+use rpassword::read_password_from_tty;
+use sha2::{Digest, Sha256};
+use signature::{Signature, Signer};
 use yubikey_piv::Readers;
 use zeroize::Zeroizing;
-use signature::{Signer, Signature};
-use rpassword::read_password_from_tty;
-use sha2::{Sha256,Digest};
 
 pub struct YubiKey(RefCell<yubikey_piv::YubiKey>);
 
@@ -19,16 +19,20 @@ impl YubiKey {
             };
         }
 
-        return Err(yubikey_piv::Error::NotFound)
+        Err(yubikey_piv::Error::NotFound)
     }
 
     pub fn verify_pin_from_tty(&mut self) -> Result<(), yubikey_piv::Error> {
         loop {
-            let pw = zeroize::Zeroizing::new(read_password_from_tty(Some("Pin: ")).expect("Could not read pin").into_bytes());
+            let pw = zeroize::Zeroizing::new(
+                read_password_from_tty(Some("Pin: "))
+                    .expect("Could not read pin")
+                    .into_bytes(),
+            );
             match self.0.borrow_mut().verify_pin(&pw) {
                 Ok(()) => return Ok(()),
-                Err(yubikey_piv::Error::WrongPin{..}) => continue, // retry if user makes mistake
-                Err(e) => return Err(e),        // any other errors cannot be recovered here
+                Err(yubikey_piv::Error::WrongPin { .. }) => continue, // retry if user makes mistake
+                Err(e) => return Err(e), // any other errors cannot be recovered here
             }
         }
     }
@@ -39,17 +43,17 @@ pub struct YubiKeySignature(Zeroizing<Vec<u8>>);
 
 impl AsRef<[u8]> for YubiKeySignature {
     fn as_ref(&self) -> &[u8] {
-        return &self.0;
+        &self.0
     }
 }
 
 impl Signature for YubiKeySignature {
     fn from_bytes(bytes: &[u8]) -> Result<YubiKeySignature, signature::Error> {
-        return Ok(YubiKeySignature(Zeroizing::new(bytes.to_vec())));
+        Ok(YubiKeySignature(Zeroizing::new(bytes.to_vec())))
     }
 
     fn as_bytes(&self) -> &[u8] {
-        return &self.0;
+        &self.0
     }
 }
 
@@ -77,16 +81,17 @@ impl Signer<YubiKeySignature> for YubiKey {
         em[k - t_len - 1] = 0;
         em[k - t_len..k - hash_len].copy_from_slice(&SHA256_ASN1_PREFIX);
         em[k - hash_len..k].copy_from_slice(&hashed);
-        
-        let result = match yubikey_piv::key::sign_data(
-            &mut self.0.borrow_mut(), 
-            &em, 
-            yubikey_piv::key::AlgorithmId::Rsa2048, 
-            yubikey_piv::key::SlotId::Authentication) {
-                Ok(res) => res,
-                _ => return Err(signature::Error::new()),
-            };
 
-        return Ok(YubiKeySignature(result));
+        let result = match yubikey_piv::key::sign_data(
+            &mut self.0.borrow_mut(),
+            &em,
+            yubikey_piv::key::AlgorithmId::Rsa2048,
+            yubikey_piv::key::SlotId::Authentication,
+        ) {
+            Ok(res) => res,
+            _ => return Err(signature::Error::new()),
+        };
+
+        Ok(YubiKeySignature(result))
     }
 }
