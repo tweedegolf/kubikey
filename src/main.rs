@@ -1,5 +1,4 @@
-use clap::Clap;
-use time::Format;
+use clap::Parser;
 
 use token::{get_access_token, get_id_token};
 
@@ -8,7 +7,7 @@ mod token;
 mod yubikey;
 
 /// Kubikey is a tool for using a yubikey to authenticate to the google kubernetes engine.
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(version = "0.1")]
 struct Opts {
     /// Email adress of the service account to use. This service account should have the public key of the yubikey configured as access key.
@@ -18,7 +17,7 @@ struct Opts {
     sub: SubCommand,
 }
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 enum SubCommand {
     /// Generate an identity token.
     #[clap()]
@@ -39,11 +38,11 @@ fn main() {
             println!("{}", get_id_token(&opts.user));
         }
         SubCommand::Access => {
-            let result = get_access_token(&opts.user);
+            let (token, expiry) = get_access_token(&opts.user);
             println!(
                 "{{\"token\": \"{}\", \"expiry\": \"{}\"}}",
-                result.0,
-                result.1.format(Format::Rfc3339)
+                token,
+                expiry.format(&time::format_description::well_known::Rfc3339).unwrap(),
             );
         }
         SubCommand::Config => {

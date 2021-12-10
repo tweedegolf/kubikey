@@ -3,14 +3,14 @@ use std::cell::RefCell;
 use rpassword::read_password_from_tty;
 use sha2::{Digest, Sha256};
 use signature::{Signature, Signer};
-use yubikey_piv::Readers;
+use yubikey::Context;
 use zeroize::Zeroizing;
 
-pub struct YubiKey(RefCell<yubikey_piv::YubiKey>);
+pub struct YubiKey(RefCell<yubikey::YubiKey>);
 
 impl YubiKey {
-    pub fn open() -> Result<YubiKey, yubikey_piv::Error> {
-        let mut readers = Readers::open()?;
+    pub fn open() -> Result<YubiKey, yubikey::Error> {
+        let mut readers = Context::open()?;
         let readers_iter = readers.iter()?;
         for reader in readers_iter {
             match reader.open() {
@@ -19,10 +19,10 @@ impl YubiKey {
             };
         }
 
-        Err(yubikey_piv::Error::NotFound)
+        Err(yubikey::Error::NotFound)
     }
 
-    pub fn verify_pin_from_tty(&mut self) -> Result<(), yubikey_piv::Error> {
+    pub fn verify_pin_from_tty(&mut self) -> Result<(), yubikey::Error> {
         loop {
             let pw = zeroize::Zeroizing::new(
                 read_password_from_tty(Some("Pin: "))
@@ -31,7 +31,7 @@ impl YubiKey {
             );
             match self.0.borrow_mut().verify_pin(&pw) {
                 Ok(()) => return Ok(()),
-                Err(yubikey_piv::Error::WrongPin { .. }) => continue, // retry if user makes mistake
+                Err(yubikey::Error::WrongPin { .. }) => continue, // retry if user makes mistake
                 Err(e) => return Err(e), // any other errors cannot be recovered here
             }
         }
@@ -82,11 +82,11 @@ impl Signer<YubiKeySignature> for YubiKey {
         em[k - t_len..k - hash_len].copy_from_slice(&SHA256_ASN1_PREFIX);
         em[k - hash_len..k].copy_from_slice(&hashed);
 
-        let result = match yubikey_piv::key::sign_data(
+        let result = match yubikey::piv::sign_data(
             &mut self.0.borrow_mut(),
             &em,
-            yubikey_piv::key::AlgorithmId::Rsa2048,
-            yubikey_piv::key::SlotId::Authentication,
+            yubikey::piv::AlgorithmId::Rsa2048,
+            yubikey::piv::SlotId::Authentication,
         ) {
             Ok(res) => res,
             _ => return Err(signature::Error::new()),
