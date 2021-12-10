@@ -42,7 +42,9 @@ fn main() {
             println!(
                 "{{\"token\": \"{}\", \"expiry\": \"{}\"}}",
                 token,
-                expiry.format(&time::format_description::well_known::Rfc3339).unwrap(),
+                expiry
+                    .format(&time::format_description::well_known::Rfc3339)
+                    .unwrap(),
             );
         }
         SubCommand::Config => {
